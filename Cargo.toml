@@ -1,0 +1,19 @@
+[package]
+name = "har-bench"
+version = "0.1.0"
+authors = ["Virgiel"]
+edition = "2021"
+
+[dependencies]
+# Async engine
+tokio = "1.15"
+# JSON
+json = "0.12"
+# Load testing tool
+goose = "0.15"
+# Small and performant allocator
+mimalloc = { version = "0.1", default-features = false }
+# Regex
+regex = "1.5"
+# Url parser
+url = "2.2"
