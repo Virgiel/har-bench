@@ -16,16 +16,33 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 // TODO error handling
 
+struct Category {
+    name: String,
+    regex: Option<Regex>,
+    nregex: Option<Regex>,
+}
+
+impl Category {
+    pub fn is_match(&self, url: &str) -> bool {
+        if let Some(regex) = &self.regex {
+            regex.is_match(url)
+        } else if let Some(nregex) = &self.nregex {
+            !nregex.is_match(url)
+        } else {
+            true
+        }
+    }
+}
+
 /// Parse categories from a file
-fn parse_category(path: impl AsRef<Path>) -> Vec<(String, Regex)> {
+fn parse_category(path: impl AsRef<Path>) -> Vec<Category> {
     let str = std::fs::read_to_string(path).unwrap();
     let mut json = json::parse(&str).unwrap();
     json.members_mut()
-        .map(|j| {
-            (
-                j["name"].take_string().unwrap(),
-                Regex::new(&j["regex"].as_str().unwrap()).unwrap(),
-            )
+        .map(|j| Category {
+            name: j["name"].take_string().unwrap(),
+            regex: j["regex"].as_str().map(|r| Regex::new(r).unwrap()),
+            nregex: j["nregex"].as_str().map(|r| Regex::new(r).unwrap()),
         })
         .collect()
 }
@@ -72,9 +89,7 @@ async fn main() -> Result<(), GooseError> {
         for entry in har["log"]["entries"].members() {
             let url = Url::parse(entry["request"]["url"].as_str().unwrap()).unwrap();
             let path = url.path();
-            let pos = categories
-                .iter()
-                .position(|(_, pattern)| pattern.is_match(path));
+            let pos = categories.iter().position(|c| c.is_match(path));
             if let Some(pos) = pos {
                 urls[pos].push(path.to_string());
             } else {
@@ -82,8 +97,8 @@ async fn main() -> Result<(), GooseError> {
             }
         }
         let mut set = GooseTaskSet::new(&name);
-        for ((name, _), urls) in categories.iter().zip(urls.into_iter()) {
-            set = set.register_task(task_from_urls(urls, name))
+        for (c, urls) in categories.iter().zip(urls.into_iter()) {
+            set = set.register_task(task_from_urls(urls, &c.name))
         }
         attack = attack.register_taskset(set);
     }
