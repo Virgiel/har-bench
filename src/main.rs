@@ -3,10 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use goose::{
-    prelude::{GooseTask, GooseTaskFunction, GooseTaskSet},
-    GooseAttack, GooseError,
-};
+use goose::{GooseAttack, GooseError, prelude::{Transaction, TransactionFunction, Scenario}};
 use mimalloc::MiMalloc;
 use regex::Regex;
 use url::Url;
@@ -48,8 +45,8 @@ fn parse_category(path: impl AsRef<Path>) -> Vec<Category> {
 }
 
 /// Create a goose task from a list of urls
-fn task_from_urls(urls: Vec<String>, name: &str) -> GooseTask {
-    let closure: GooseTaskFunction = {
+fn task_from_urls(urls: Vec<String>, name: &str) -> Transaction {
+    let closure: TransactionFunction = {
         Arc::new(move |user| {
             let urls = urls.clone();
             Box::pin(async move {
@@ -64,7 +61,7 @@ fn task_from_urls(urls: Vec<String>, name: &str) -> GooseTask {
             })
         })
     };
-    GooseTask::new(closure).set_name(name)
+    Transaction::new(closure).set_name(name)
 }
 
 #[tokio::main]
@@ -96,11 +93,11 @@ async fn main() -> Result<(), GooseError> {
                 println!("Skipped path {}", path);
             }
         }
-        let mut set = GooseTaskSet::new(&name);
+        let mut scenario = Scenario::new(&name);
         for (c, urls) in categories.iter().zip(urls.into_iter()) {
-            set = set.register_task(task_from_urls(urls, &c.name))
+            scenario = scenario.register_transaction(task_from_urls(urls, &c.name))
         }
-        attack = attack.register_taskset(set);
+        attack = attack.register_scenario(scenario);
     }
     attack.execute().await?;
 

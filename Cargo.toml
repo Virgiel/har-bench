@@ -10,7 +10,7 @@ tokio = "1.15"
 # JSON
 json = "0.12"
 # Load testing tool
-goose = "0.15"
+goose = "0.16"
 # Small and performant allocator
 mimalloc = { version = "0.1", default-features = false }
 # Regex
