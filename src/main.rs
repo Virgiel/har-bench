@@ -3,7 +3,10 @@ use std::{
     sync::Arc,
 };
 
-use goose::{GooseAttack, GooseError, prelude::{Transaction, TransactionFunction, Scenario}};
+use goose::{
+    prelude::{Scenario, Transaction, TransactionFunction},
+    GooseAttack, GooseError,
+};
 use mimalloc::MiMalloc;
 use regex::Regex;
 use url::Url;
@@ -50,10 +53,13 @@ fn task_from_urls(urls: Vec<String>, name: &str) -> Transaction {
         Arc::new(move |user| {
             let urls = urls.clone();
             Box::pin(async move {
+                let mut _size = 0;
                 for url in urls.iter() {
                     let result = user.get(url).await?;
-                    if let Ok(response) = result.response {
-                        let _bytes = response.bytes().await?;
+                    if let Ok(mut response) = result.response {
+                        while let Some(chunk) = response.chunk().await? {
+                            _size += chunk.len();
+                        }
                     };
                 }
 
