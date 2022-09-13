@@ -3,6 +3,7 @@ use std::{
     sync::Arc,
 };
 
+use clap::Parser;
 use goose::{
     prelude::{Scenario, Transaction, TransactionFunction},
     GooseAttack, GooseError,
@@ -70,15 +71,22 @@ fn task_from_urls(urls: Vec<String>, name: &str) -> Transaction {
     Transaction::new(closure).set_name(name)
 }
 
+/// HAR benchmark: benchmark endpoints from har files
+#[derive(Parser, Debug)]
+struct Cmd {
+    #[clap(default_value = "./load-test")]
+    /// path to har dir
+    dir: PathBuf,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), GooseError> {
-    // TODO make configurable
-    let har_dir = "./load-test";
+    let cmd = Cmd::parse();
     // Load categories
-    let categories = parse_category(PathBuf::from(&har_dir).join("categories.json"));
+    let categories = parse_category(cmd.dir.join("categories.json"));
     let mut attack = GooseAttack::initialize()?;
     // Load every har file
-    for result in std::fs::read_dir(har_dir).unwrap() {
+    for result in std::fs::read_dir(cmd.dir).unwrap() {
         let har_entry = result.unwrap();
         let name = har_entry.file_name().to_string_lossy().to_string();
         if name == "categories.json" {
