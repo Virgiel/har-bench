@@ -5,6 +5,7 @@ use std::{
 
 use clap::Parser;
 use goose::{
+    config::GooseConfiguration,
     prelude::{Scenario, Transaction, TransactionFunction},
     GooseAttack, GooseError,
 };
@@ -68,6 +69,7 @@ fn task_from_urls(urls: Vec<String>, name: &str) -> Transaction {
             })
         })
     };
+
     Transaction::new(closure).set_name(name)
 }
 
@@ -77,6 +79,18 @@ struct Cmd {
     #[clap(default_value = "./load-test")]
     /// path to har dir
     dir: PathBuf,
+    #[clap(long, default_value = "localhost:8080")]
+    /// Host to benchmark
+    host: String,
+    #[clap(short, long, default_value = "./report.hml")]
+    /// Report file path
+    report: String,
+    #[clap(short = 't', default_value = "./")]
+    /// Report file path
+    run_time: String,
+    #[clap(long, default_value = "false")]
+    /// Disable automatic gzip decoding
+    no_gzip: bool,
 }
 
 #[tokio::main]
@@ -84,7 +98,12 @@ async fn main() -> Result<(), GooseError> {
     let cmd = Cmd::parse();
     // Load categories
     let categories = parse_category(cmd.dir.join("categories.json"));
-    let mut attack = GooseAttack::initialize()?;
+    let mut conf = GooseConfiguration::default();
+    conf.run_time = cmd.run_time;
+    conf.host = cmd.host;
+    conf.report_file = cmd.report;
+    conf.no_gzip = cmd.no_gzip;
+    let mut attack = GooseAttack::initialize_with_config(conf)?;
     // Load every har file
     for result in std::fs::read_dir(cmd.dir).unwrap() {
         let har_entry = result.unwrap();
