@@ -59,7 +59,7 @@ fn task_from_urls(urls: Vec<String>, name: &str) -> Transaction {
                 for url in urls.iter() {
                     let result = user.get(url).await?;
                     if let Ok(mut response) = result.response {
-                        while let Some(chunk) = response.chunk().await? {
+                        while let Ok(Some(chunk)) = response.chunk().await {
                             _size += chunk.len();
                         }
                     };
