@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 # Async engine
-tokio = "1.24"
+tokio = "1.25"
 # JSON
 json = "0.12"
 # Load testing tool
