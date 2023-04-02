@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 # Async engine
-tokio = "1.25"
+tokio = "1.28"
 # JSON
 json = "0.12"
 # Load testing tool
@@ -14,11 +14,11 @@ goose = "0.17"
 # Small and performant allocator
 mimalloc = { version = "0.1", default-features = false }
 # Regex
-regex = "1.7"
+regex = "1.8.1"
 # Url parser
 url = "2.3"
 # Argument parser
-clap = { version = "4.1", features = ["derive"] }
+clap = { version = "4.2", features = ["derive"] }
 
 # Optimal size and perf
 [profile.release]
