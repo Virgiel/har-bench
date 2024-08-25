@@ -39,10 +39,12 @@ impl Category {
 /// Parse categories from a file
 fn parse_category(path: impl AsRef<Path>) -> Vec<Category> {
     let str = std::fs::read_to_string(path).unwrap();
-    let mut json = json::parse(&str).unwrap();
-    json.members_mut()
+    let mut json: serde_json::Value = serde_json::from_str(&str).unwrap();
+    json.as_array_mut()
+        .unwrap()
+        .iter_mut()
         .map(|j| Category {
-            name: j["name"].take_string().unwrap(),
+            name: j["name"].take().to_string(),
             regex: j["regex"].as_str().map(|r| Regex::new(r).unwrap()),
             nregex: j["nregex"].as_str().map(|r| Regex::new(r).unwrap()),
         })
@@ -113,10 +115,10 @@ async fn main() -> Result<(), GooseError> {
         }
         println!("Load har file: {}", name);
         let str = std::fs::read_to_string(har_entry.path()).unwrap();
-        let har = json::parse(&str).unwrap();
+        let har: serde_json::Value = serde_json::from_str(&str).unwrap();
         let mut urls: Vec<Vec<String>> = categories.iter().map(|_| Vec::new()).collect();
         // Load every request urls
-        for entry in har["log"]["entries"].members() {
+        for entry in har["log"]["entries"].as_array().unwrap() {
             let url = Url::parse(entry["request"]["url"].as_str().unwrap()).unwrap();
             let path = url.path();
             let pos = categories.iter().position(|c| c.is_match(path));
